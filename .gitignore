@@ -1,2 +1,18 @@
 tmp/*
 .venv/*
+
+# Python and LaTeX build products.
+__pycache__/
+*.py[cod]
+*.aux
+*.log
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.xdv
+submission/build/
+
+# PDF figures are the report sources; PNG files are local previews.
+submission/figures/*.png

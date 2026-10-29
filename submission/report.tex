@@ -1,5 +1,27 @@
 \documentclass{article}
 \usepackage{ctex}
+\usepackage{graphicx}
+\usepackage[a4paper,margin=18mm]{geometry}
+\usepackage{float}
+\usepackage{adjustbox}
+\setlength{\intextsep}{8pt}
+
+% Keep each original handwritten page intact and frame its exact boundary.
+\newsavebox{\handwrittenbox}
+\newcommand{\handwrittenpage}[3][0.94\textheight]{%
+    \par\noindent
+    \begingroup
+    \setlength{\fboxsep}{0pt}%
+    \setlength{\fboxrule}{0.3pt}%
+    \sbox{\handwrittenbox}{\includegraphics[page=#3,clip,
+        width=\dimexpr\linewidth-2\fboxrule\relax,
+        height=#1,keepaspectratio]{#2}}%
+    \makebox[\linewidth][c]{%
+        % Draw the frame after the PDF so its white background cannot hide it.
+        \rlap{\hspace{\fboxrule}\usebox{\handwrittenbox}}%
+        \fbox{\phantom{\usebox{\handwrittenbox}}}}%
+    \endgroup\par
+}
 
 \title{DeepLearning\,Homework\,1}
 \author{郭恒铭\,2024010033}
@@ -7,6 +29,40 @@
 \begin{document}
 
 \section{Part One}
+
+\subsection{1.3.1}
+\handwrittenpage[0.83\textheight]{question1/01.pdf}{1}
+\clearpage
+\handwrittenpage{question1/01.pdf}{2}
+\clearpage
+
+\subsection{1.3.2}
+\handwrittenpage[0.90\textheight]{question1/02.pdf}{1}
+\clearpage
+\handwrittenpage{question1/02.pdf}{2}
+\clearpage
+
+\subsection{1.3.3}
+\handwrittenpage[0.90\textheight]{question1/03.pdf}{1}
+\clearpage
+\handwrittenpage{question1/03.pdf}{2}
+\clearpage
+\handwrittenpage{question1/03.pdf}{3}
+\clearpage
+\handwrittenpage{question1/03.pdf}{4}
+\clearpage
+\handwrittenpage{question1/03.pdf}{5}
+\clearpage
+\handwrittenpage{question1/03.pdf}{6}
+\clearpage
+\handwrittenpage{question1/03.pdf}{7}
+\clearpage
+
+\subsection{1.3.4}
+\handwrittenpage[0.90\textheight]{question1/04.pdf}{1}
+\clearpage
+\handwrittenpage{question1/04.pdf}{2}
+\clearpage
 
 \section{Part Two}
 
@@ -18,11 +74,57 @@
 
 运行\texttt{python NumPy/run.py --check}，所报告的每类参数和输入的误差见表\ref{table:parse_input_error}。
 
+\begin{table}[H]
+    \centering
+    \caption{各类参数和输入的最大归一化梯度误差。正常梯度均低于$10^{-5}$；末行为故意遗漏路径的错误梯度对照。}
+    \label{table:parse_input_error}
+    \begin{tabular}{lrr}
+        \hline
+        参数/输入 & 两专家数值例 & 三专家Top-2 \\
+        \hline
+            $W_1$ & $1.40\times10^{-11}$ & $1.37\times10^{-10}$ \\
+            $b_1$ & $1.08\times10^{-10}$ & $1.23\times10^{-10}$ \\
+            $W_2$ & $4.08\times10^{-11}$ & $1.17\times10^{-10}$ \\
+            $b_2$ & $9.35\times10^{-11}$ & $1.00\times10^{-10}$ \\
+            $G$ & $6.08\times10^{-11}$ & $8.21\times10^{-11}$ \\
+            $C$ & $4.27\times10^{-11}$ & $1.14\times10^{-10}$ \\
+            $b_c$ & $6.44\times10^{-11}$ & $1.60\times10^{-10}$ \\
+            输入 & $4.14\times10^{-11}$ & $1.08\times10^{-10}$ \\
+        \hline
+        错误输入梯度（对照） & 0.1333 & 0.2797 \\
+        \hline
+    \end{tabular}
+\end{table}
+
+
 经诊断所提供的错误输入梯度变体，判断是从正确输入梯度中减去了 $\Delta C$，遗漏了恒等残差路径。
 
 \subsection{2.3.3}
 
 绘制的损失曲线如图\ref{fig:loss_curve}所示，三个预测请见表\ref{table:predict}。
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.64\linewidth]{../HW1_Release/results/numpy_loss.pdf}
+    \caption{固定128样本批次上的训练交叉熵，使用学习率0.2进行400次SGD更新。}
+    \label{fig:loss_curve}
+\end{figure}
+
+\begin{table}[H]
+    \centering
+    \caption{脚本固定的三个预测示例。上下文按可读字符展示，括号内为目标或预测的字节值，空格显式标注。}
+    \label{table:predict}
+    \begin{tabular}{rlll}
+        \hline
+        样本索引 & 上下文 & 真实下一字节 & 预测下一字节 \\
+        \hline
+            0 & \texttt{tle'} & \texttt{s}（115） & 空格（32） \\
+            64 & \texttt{est=} & \texttt{a}（97） & \texttt{e}（101） \\
+            1 & \texttt{u\ as} & 空格（32） & 空格（32） \\
+        \hline
+    \end{tabular}
+\end{table}
+
 
 从预测结果可以看出，预测并非完全正确。
 \section{Part Three}
@@ -33,13 +135,61 @@
 
 三种配置的训练/验证曲线如图\ref{fig:train_valid_loss}所示，测试指标如表\ref{table:test}所示
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{figures/moe_training_validation_seed416.pdf}
+    \caption{三种配置的训练与验证交叉熵曲线（随机种子为416）。}
+    \label{fig:train_valid_loss}
+\end{figure}
+
+\begin{table}[H]
+    \centering
+    \caption{三种配置的测试指标。平均CE为文本域与代码域CE的等权平均，PPL为平均CE的指数。}
+    \label{table:test}
+    \begin{adjustbox}{max width=\linewidth}
+        \begin{tabular}{lrrrr}
+            \hline
+            配置 & 文本CE & 代码CE & 平均CE & PPL \\
+            \hline
+            Dense（计算量匹配） & 1.9787 & 1.7960 & 1.8874 & 6.6020 \\
+            MoE & 1.9238 & 1.6505 & 1.7872 & 5.9725 \\
+            Dense（参数量匹配） & 1.8958 & 1.6058 & 1.7508 & 5.7591 \\
+            \hline
+        \end{tabular}%
+    \end{adjustbox}
+\end{table}
+
 
 
 \subsection{3.4.2}
 
 质量、总参数量、每token的MAC次数以及完整批次前向延迟的比较见表\ref{table:compare}
 
+\begin{table}[H]
+    \centering
+    \caption{三种配置的质量、容量与计算成本比较。延迟为NVIDIA GeForce RTX 4060 Laptop GPU上完整批次（$B=32,T=64$）前向耗时的中位数，包含分发开销。}
+    \label{table:compare}
+    \begin{adjustbox}{max width=\linewidth}
+        \begin{tabular}{lrrrrr}
+            \hline
+            配置 & 测试CE & 测试PPL & 总参数量 & MAC/token & 延迟（ms/批） \\
+            \hline
+            Dense（计算量匹配） & 1.8874 & 6.6020 & 139,024 & 133,120 & 0.3105 \\
+            MoE & 1.7872 & 5.9725 & 603,264 & 133,120 & 3.2826 \\
+            Dense（参数量匹配） & 1.7508 & 5.7591 & 601,360 & 591,872 & 0.6872 \\
+            \hline
+        \end{tabular}%
+    \end{adjustbox}
+\end{table}
+
 专家使用情况见图\ref{fig:expert_usage}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{figures/moe_expert_usage_routing_seed416.pdf}
+    \caption{两个MoE块的专家使用比例，以及正常路由与三个固定种子下最后一层路由扰动的诊断CE（模型随机种子为416）。}
+    \label{fig:expert_usage}
+\end{figure}
 
 \paragraph{容量与预测质量}  先比较MoE与计算量匹配的Dense，可以发现二者都是$133,120 \mathrm{MAC/token}$，MoE的总参数约为Dense的4.34倍，测试PPL下降约$9.53\%$，文本和代码域CE均下降，其中代码域改善更大。因此在相同理论矩阵计算预算下，MoE提供了更大的参数容量，并在本次实验中得到了更好的预测质量。
 
@@ -63,4 +213,55 @@
 \paragraph{专家使用情况} 从图中可以看出，两层的16个专家均有使用，但是比例并不均匀，且文本域和代码域的专家使用分布不同，例如第一层的专家11,代码域使用比例为15.95\%,而文本域约为4.76\%，这说明路由存在数据域相关的偏好，到那时还不足以证明某专家已经具备语义能力或专门负责Python.
 
 
+\subsection{3.4.3}
+
+\textbf{研究问题。}在最后一个MoE块选中的两个专家完全相同时，学习到的融合权重是否比等权混合更有利于预测？前一小题同时扰动专家身份与权重，本实验仅隔离融合权重的作用。
+
+\textbf{实验设计。}使用种子416训练所得的验证最优检查点，不重新训练，不改变任何模型参数、第一块或最后一块的专家选择。仅将最后一块选中专家的权重替换为
+\[
+    g_e^{(\alpha)}=\alpha g_e+(1-\alpha)/2,
+    \qquad \alpha\in\{0,0.5,1\}.
+\]
+其中$\alpha=1$是原模型对照，$\alpha=0$为等权，$0.5$为中间设置。三个取值在评估前固定。三组均在Orin GPU上，按原协议评估完整测试数据块（$B=32,T=64$），分别计算两域CE并等权平均，再取指数得到PPL。每条序列独立推理。本机重新计算正常对照，避免跨设备比较。
+
+\textbf{控制检查。}原模型与$\alpha=1$包装后的探针输出完全一致。完整测试的1,291,008个位置在三组中的专家编号指纹相同，各层专家使用次数及评估目标数也一致。参数量和矩阵MAC不变，改变的只有最后一块的融合权重。
+
+\begin{table}[H]
+    \centering
+    \caption{固定最后一块专家选择时，不同融合权重的测试结果。}
+    \label{table:gate_weights}
+    \begin{adjustbox}{max width=\linewidth}
+        \begin{tabular}{lrrrr}
+            \hline
+            $\alpha$与设置 & 文本CE & 代码CE & 平均CE & PPL \\
+            \hline
+            $1$（学习权重） & 1.9238 & 1.6505 & 1.7872 & 5.9726 \\
+            $0.5$（中间设置） & 1.9400 & 1.6798 & 1.8099 & 6.1096 \\
+            $0$（等权） & 2.0432 & 1.7875 & 1.9153 & 6.7892 \\
+            \hline
+        \end{tabular}%
+    \end{adjustbox}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.80\linewidth]{figures/moe_gate_weights_seed416.pdf}
+    \caption{固定专家编号，逐步从等权恢复到学习权重时的测试交叉熵。}
+    \label{fig:gate_weights}
+\end{figure}
+
+\textbf{结果与解释。}如表\ref{table:gate_weights}及图\ref{fig:gate_weights}，在三个取值上，两域CE均随$\alpha$增大而下降。等权相对学习权重使平均CE增加0.1282，PPL增加13.67\%；中间设置介于两者之间。即使选中的专家完全相同，等权也不能复现原模型质量，表明该检查点中学习权重在专家选择之外提供了额外价值。
+
+\textbf{局限。}仅考察一个训练种子的最后一块，且模型原本与学习权重共同训练；推理时替换权重会造成分布变化。结果不能说明从头进行等权训练一定更差，也不能推断所有层、所有插值取值或其他模型均有相同表现。
+
+\textbf{复现。}在仓库根目录运行以下命令，可重新评估、保存日志并绘图。
+\begin{verbatim}
+python scripts/explore_gate_weights.py --device cuda
+\end{verbatim}
+
+\paragraph*{AI Use Statement（本探索部分）}
+本探索使用OpenAI Codex辅助设计对照实验、编写评估与绘图脚本，并整理分析文字。
+所有数值均由脚本读取现有检查点并实际评估得到，未编造实验结果。
+验证包括原模型输出一致性、全部测试位置的专家编号指纹，以及各层专家使用次数与评估目标数一致性。
+本探索按题目允许AI协助的范围开展，本声明仅覆盖该探索部分，最终提交内容与责任由提交者承担。
 \end{document}
