@@ -12,6 +12,19 @@
 
 \subsection{2.3.1}
 
+实现前向和反向传播，请见\texttt{NumPy/model.py}. 复现第一部分的损失为$\log 3 = 1.0986122886681098$，与第一部分手动计算的结果一致，且也支持提供的三专家Top-2情形。
+
+\subsection{2.3.2}
+
+运行\texttt{python NumPy/run.py --check}，所报告的每类参数和输入的误差见表\ref{table:parse_input_error}。
+
+经诊断所提供的错误输入梯度变体，判断是从正确输入梯度中减去了 $\Delta C$，遗漏了恒等残差路径。
+
+\subsection{2.3.3}
+
+绘制的损失曲线如图\ref{fig:loss_curve}所示，三个预测请见表\ref{table:predict}。
+
+从预测结果可以看出，预测并非完全正确。
 \section{Part Three}
 
 \subsection{3.4.1}
@@ -27,4 +40,27 @@
 质量、总参数量、每token的MAC次数以及完整批次前向延迟的比较见表\ref{table:compare}
 
 专家使用情况见图\ref{fig:expert_usage}
+
+\paragraph{容量与预测质量}  先比较MoE与计算量匹配的Dense，可以发现二者都是$133,120 \mathrm{MAC/token}$，MoE的总参数约为Dense的4.34倍，测试PPL下降约$9.53\%$，文本和代码域CE均下降，其中代码域改善更大。因此在相同理论矩阵计算预算下，MoE提供了更大的参数容量，并在本次实验中得到了更好的预测质量。
+
+再比较MoE与参数量匹配的Dense，二者的参数量相差仅$0.32\%$，Dense的PPL为$5.7591$，优于MoE的$5.9725$，但是MoE的MAC减少约$77.5\%$，因此可以看出MoE用更少的计算取得了接近的质量，但是在本次实验中参数匹配的Dense效果仍然更好。
+
+\paragraph{理论计算与实际延迟} 从同一设备的实验可以看出，
+\begin{itemize}
+    \item 计算量匹配Dense: $0.3105$ms/批
+    \item MoE: $3.2826$ms/批
+    \item 参数量匹配Dense: $0.6872$ms/批
+\end{itemize}
+可以看出MoE分别慢了10.57倍和4.78倍，这可能与路由、筛选token等步骤需要额外操作有关，但是没有进行实验验证。不过可以从中看出，MAC可以衡量理论矩阵运算量，但是不能单独预测实际延迟。
+
+\paragraph{路由扰动} 从数据中可以看出：
+\begin{itemize}
+    \item 正常CE: 1.7872
+    \item 扰动后平均诊断CE: 2.8527
+\end{itemize}
+可以从中看出，即使专家负载不变，扰乱原有的token-路由匹配也会损害预测。但是由于扰动同时影响专家身份和权重，无法区分二者作用。
+
+\paragraph{专家使用情况} 从图中可以看出，两层的16个专家均有使用，但是比例并不均匀，且文本域和代码域的专家使用分布不同，例如第一层的专家11,代码域使用比例为15.95\%,而文本域约为4.76\%，这说明路由存在数据域相关的偏好，到那时还不足以证明某专家已经具备语义能力或专门负责Python.
+
+
 \end{document}
